@@ -31,6 +31,12 @@
 
 @end
 
+static void (*originalIMP)(id self, SEL _cmd, void* arg0, BOOL arg1, BOOL arg2, id arg3) = NULL;
+
+void interceptIMP (id self, SEL _cmd, void* arg0, BOOL arg1, BOOL arg2, id arg3) {
+    originalIMP(self, _cmd, arg0, TRUE, arg2, arg3);
+}
+
 @implementation CDVKeyboard
 
 - (id)settingForKey:(NSString*)key
@@ -103,6 +109,20 @@
                                                              }];
 
     self.webView.scrollView.delegate = self;
+
+    // The keyboard doesn't show automatically on focus. This is a hack around it. See
+    // http://stackoverflow.com/questions/32407185/wkwebview-cant-open-keyboard-for-input-field
+    Class cls = NSClassFromString(@"WKContentView");
+    SEL originalSelector = NSSelectorFromString(@"_startAssistingNode:userIsInteracting:blurPreviousNode:userObject:");
+
+    Method originalMethod = class_getInstanceMethod(cls, originalSelector);
+
+    IMP impOvverride = (IMP) interceptIMP;
+
+    originalIMP = (void *)method_getImplementation(originalMethod);
+
+    method_setImplementation(originalMethod, impOvverride);
+    // End keyboard focus hack
 }
 
 #pragma mark HideFormAccessoryBar
