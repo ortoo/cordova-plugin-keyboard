@@ -132,7 +132,6 @@ void interceptIMP (id self, SEL _cmd, void* arg0, BOOL arg1, BOOL arg2, id arg3)
     return _hideFormAccessoryBar;
 }
 
-static IMP UIOriginalImp;
 static IMP WKOriginalImp;
 
 - (void)setHideFormAccessoryBar:(BOOL)ahideFormAccessoryBar
@@ -140,22 +139,17 @@ static IMP WKOriginalImp;
     if (ahideFormAccessoryBar == _hideFormAccessoryBar) {
         return;
     }
-
-    Method UIMethod = class_getInstanceMethod(NSClassFromString(@"UIWebBrowserView"), @selector(inputAccessoryView));
     Method WKMethod = class_getInstanceMethod(NSClassFromString(@"WKContentView"), @selector(inputAccessoryView));
 
     if (ahideFormAccessoryBar) {
-        UIOriginalImp = method_getImplementation(UIMethod);
         WKOriginalImp = method_getImplementation(WKMethod);
 
         IMP newImp = imp_implementationWithBlock(^(id _s) {
             return nil;
         });
 
-        method_setImplementation(UIMethod, newImp);
         method_setImplementation(WKMethod, newImp);
     } else {
-        method_setImplementation(UIMethod, UIOriginalImp);
         method_setImplementation(WKMethod, WKOriginalImp);
     }
 
